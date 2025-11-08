@@ -35,24 +35,45 @@ function App() {
     recognition.onend = () => {
       setStatus("Idle 💤");
       setListening(false);
+      // Auto restart listening after few seconds
+      setTimeout(() => startListening(), 1500);
     };
 
     recognitionRef.current = recognition;
+
+    // Auto start listening when app opens
+    startListening();
+
+    // When app comes to foreground, restart mic
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startListening();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
-  // Text-to-Speech
+  // Text-to-Speech (Natural voice)
   const speak = (text) => {
     setStatus("🔊 Speaking...");
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "hi-IN";
+    utter.lang = "en-IN"; // Indian English accent
     utter.rate = 1;
+    utter.pitch = 1; // make it deeper like a real Jarvis
+    utter.voice = window.speechSynthesis
+      .getVoices()
+      .find((v) => v.name.includes("Male") || v.name.includes("Google UK English Male"));
     utter.onend = () => setStatus("Idle 💤");
     window.speechSynthesis.speak(utter);
   };
 
-  // Knowledge Base (Simple logic)
+  // Simple Knowledge Base
   const knowledgeBase = {
-    "who are you": "I am Jarvis, your personal voice assistant created by Mayank.",
+    "who are you": "I am Jarvis, your personal assistant created by Mayank.",
     "how are you": "I am always ready to help you!",
     "what is your purpose": "My purpose is to assist you with tasks and respond to your voice commands.",
   };
@@ -89,9 +110,15 @@ function App() {
     } else if (command.includes("open google")) {
       speak("Opening Google");
       window.open("https://www.google.com", "_blank");
-    } else if (command.includes("open whatsapp")) {
-      speak("Opening WhatsApp");
-      window.open("whatsapp://send", "_blank");
+    } else if (command.includes("open gallery")) {
+      speak("Opening Gallery");
+      window.open("photos://", "_blank");
+    } else if (command.includes("open camera")) {
+      speak("Opening Camera");
+      window.open("camera://", "_blank");
+    } else if (command.includes("open phone")) {
+      speak("Opening Phone dialer");
+      window.open("tel://", "_blank");
     } else if (command.includes("search") && command.includes("youtube")) {
       const query = command.replace("search", "").replace("on youtube", "").trim();
       speak(`Searching ${query} on YouTube`);
@@ -103,7 +130,7 @@ function App() {
 
   // Start Listening
   const startListening = () => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && !listening) {
       setTranscript("");
       setListening(true);
       recognitionRef.current.start();
@@ -152,3 +179,4 @@ function App() {
 }
 
 export default App;
+
