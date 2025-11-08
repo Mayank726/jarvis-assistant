@@ -55,7 +55,7 @@ function App() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, []);
+  });
 
   // Text-to-Speech (Natural voice)
   const speak = (text) => {
